@@ -1,3 +1,4 @@
+/*
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -25,3 +26,4 @@ class HyperUnitTests {
         assertEquals(1 + 2, 3);
     }
 }
+*/
