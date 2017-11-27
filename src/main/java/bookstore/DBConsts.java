@@ -4,11 +4,12 @@ class DBConsts {
     static final String SCHEMA = "\n"+
         "CREATE TABLE IF NOT EXISTS authors (\n"+
             "id INT IDENTITY PRIMARY KEY,\n"+
-            "name VARCHAR(5000)\n"+
+            "name VARCHAR(5000),\n"+
+            "CONSTRAINT deduplicated_authors UNIQUE (id, name),\n"+
         ");\n"+
         "CREATE TABLE IF NOT EXISTS tags (\n"+
             "id INT IDENTITY PRIMARY KEY,\n"+
-            "tag VARCHAR(5000)\n"+
+            "tag VARCHAR(5000),\n"+
         ");\n"+
         "CREATE TABLE IF NOT EXISTS books (\n"+
             "id INT IDENTITY PRIMARY KEY,\n"+
@@ -21,5 +22,6 @@ class DBConsts {
         "CREATE TABLE IF NOT EXISTS book_tags (\n"+
             "book_id INT NOT NULL FOREIGN KEY REFERENCES books(id),\n"+
             "tag_id INT NOT NULL FOREIGN KEY REFERENCES tags(id),\n"+
-        ");";
+            "CONSTRAINT deduplicated_tags UNIQUE (book_id, tag_id),\n"+
+        ");\n";
 }

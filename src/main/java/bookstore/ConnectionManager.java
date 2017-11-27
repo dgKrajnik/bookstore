@@ -13,7 +13,7 @@ class ConnectionManager {
     protected static Connection getConnection() {
         try {
             if (sqldb == null || sqldb.isClosed()) {
-                sqldb = DriverManager.getConnection("jdbc:hsqldb:file:bookdb", "SA", "");
+                sqldb = DriverManager.getConnection("jdbc:hsqldb:mem:bookdb", "SA", "");
                 Statement initStatement = sqldb.createStatement();
                 initStatement.executeUpdate(DBConsts.SCHEMA);
                 initStatement.close();

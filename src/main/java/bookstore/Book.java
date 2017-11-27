@@ -6,14 +6,18 @@ import java.time.LocalDate;
 import java.math.BigDecimal;
 
 import java.sql.Connection;
+import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Blob;
+import java.sql.SQLException;
 
 public class Book {
-    private Integer id; // Nullable, if not in the DB.
-    private String name;
-    private LocalDate publishDate;
-    private BigDecimal price;
-    private String author;
+    protected Integer id; // Nullable, if not in the DB.
+    protected String name;
+    protected LocalDate publishDate;
+    protected BigDecimal price;
+    protected String author;
 
     protected Book(Integer id, String name, LocalDate publishDate,
                    BigDecimal price, String author) {
@@ -44,38 +48,77 @@ public class Book {
         return this.author;
     }
 
-    public byte[] getData() {
+    public byte[] getData() throws SQLException {
         if (id == null) {
             return null;
         }
+        byte[] dataBytes = null;
         Connection c = ConnectionManager.getConnection();
-        return null;
+        PreparedStatement dataStatement = c.prepareStatement("SELECT book_data FROM books WHERE id = ?");
+        try {
+            dataStatement.setInt(1, this.id);
+            ResultSet dataResults = dataStatement.executeQuery();
+            dataResults.first();
+            Blob dataBlob = dataResults.getBlob(1);
+            // This conversion is safe because we know that the size of the blob is
+            // less than 2.14 gigabytes, so the length will fit in an int.
+            dataBytes = dataBlob.getBytes(1, (int) dataBlob.length());
+        } finally {
+            dataStatement.close();
+        }
+        return dataBytes;
     }
-    public void setData(byte[] data) {
+    protected void setData(byte[] data) throws SQLException {
         if (id == null) {
             throw new UnsupportedOperationException("Cannot set data for a book not currently in the database.");
         }
         Connection c = ConnectionManager.getConnection();
+        Blob dataBlob = c.createBlob();
+        dataBlob.setBytes(1, data);
+        PreparedStatement dataStatement = c.prepareStatement("UPDATE books SET book_data = ? WHERE id = ?");
+        try {
+            dataStatement.setBlob(1, dataBlob);
+            dataStatement.setInt(2, this.id);
+            dataStatement.executeUpdate();
+        } finally {
+            dataStatement.close();
+        }
     }
 
-    public ArrayList<String> getTags() {
+    public ArrayList<Tag> getTags() throws SQLException {
         if (id == null) {
             return null;
         }
         Connection c = ConnectionManager.getConnection();
-        return null;
-    }
-    public ArrayList<Integer> getTagIDs() {
-        if (id == null) {
-            return null;
+        PreparedStatement tagStatement = c.prepareStatement("SELECT tags.id, tags.name FROM book_tags "+
+                                                            " INNER JOIN books ON books.id = book_tags.book_id "+
+                                                            " INNER JOIN tags ON tags.id = book_tags.tag_id "+
+                                                            "WHERE books.id = ?");
+        ArrayList<Tag> tags = new ArrayList<Tag>();
+        try {
+            tagStatement.setInt(1, this.id);
+            ResultSet tagResults = tagStatement.executeQuery();
+            while (tagResults.next()) {
+                Tag tag = new Tag(tagResults.getInt(1), tagResults.getString(2));
+                tags.add(tag);
+            }
+        } finally {
+            tagStatement.close();
         }
-        Connection c = ConnectionManager.getConnection();
-        return null;
+        return tags;
     }
-    public void setTags(ArrayList<Integer> tagIDs) {
+    protected void addTag(int tagID) throws SQLException {
         if (id == null) {
             throw new UnsupportedOperationException("Cannot set tags for a book not currently in the database.");
         }
         Connection c = ConnectionManager.getConnection();
+        PreparedStatement addStatement = c.prepareStatement("INSERT INTO book_tags VALUES (?, ?)");
+        try {
+            addStatement.setInt(1, this.id);
+            addStatement.setInt(2, tagID);
+            addStatement.executeUpdate();
+        } finally {
+            addStatement.close();
+        }
     }
 }
