@@ -6,14 +6,15 @@ import java.math.BigDecimal;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 
-class ListerTests {
+class DeleterTests {
     @BeforeAll
     static void clearDB() {
         try {
@@ -25,21 +26,28 @@ class ListerTests {
     }
 
     @Test
-    void basicListTest() {
+    void basicDeleteTest() {
         try {
             Connection c = ConnectionManager.getConnection();
             Statement prefillStatement = c.createStatement();
             prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Herrington')");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Mornington', '2017-08-08', 124.80, 0)");
+            prefillStatement.executeUpdate(
+                "INSERT INTO books (name, publish_date, price, author_id) "
+              + "VALUES ('Mornington', '2017-08-08', 124.80, 0)",
+                Statement.RETURN_GENERATED_KEYS
+            );
+            ResultSet insertres = prefillStatement.getGeneratedKeys();
+            insertres.next();
+            int insertID = insertres.getInt(1);
             prefillStatement.close();
 
-            DefaultBookLister lister = new DefaultBookLister();
-            List<Book> books = lister.getBooks();
-            assertEquals(books.get(0).getName(), "Mornington");
-            assertEquals(books.get(0).getDate(), LocalDate.of(2017, 8, 8));
-            assertEquals(books.get(0).getPrice(), new BigDecimal("124.8000"));
-            assertEquals(books.get(0).getAuthor(), "S. Herrington");
+            DefaultBookDeleter deleter = new DefaultBookDeleter();
+            deleter.deleteBook(insertID);
+
+            Statement getterStatement = c.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+                                                          ResultSet.CONCUR_READ_ONLY);
+            ResultSet books = getterStatement.executeQuery("SELECT * FROM books");
+            assertTrue(!books.first());
         } catch (SQLException e) {
             fail("SQLException: " + e.getMessage());
         }

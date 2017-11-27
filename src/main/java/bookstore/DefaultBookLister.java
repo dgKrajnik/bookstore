@@ -11,7 +11,7 @@ import java.sql.SQLException;
 
 import org.hsqldb.jdbc.JDBCDriver;
 
-public class DefaultBookLister {
+public class DefaultBookLister implements BookLister {
     public DefaultBookLister() {};
 
     public List<Book> getBooks() throws SQLException {
@@ -19,9 +19,11 @@ public class DefaultBookLister {
         Connection c = ConnectionManager.getConnection();
         Statement listerStatement = c.createStatement();
         try {
-            ResultSet books = listerStatement.executeQuery("SELECT * FROM books" +
-                                                           " LEFT OUTER JOIN authors " +
-                                                           "  ON books.author_id = authors.id");
+            ResultSet books = listerStatement.executeQuery(
+                "SELECT * FROM books "
+              + " LEFT OUTER JOIN authors "
+              + "  ON books.author_id = authors.id"
+            );
             bookList = new ArrayList<Book>();
             while (books.next()) {
                 Book book = new Book(books.getInt(1), books.getString(2), books.getDate(3).toLocalDate(),

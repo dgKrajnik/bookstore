@@ -90,10 +90,12 @@ public class Book {
             return null;
         }
         Connection c = ConnectionManager.getConnection();
-        PreparedStatement tagStatement = c.prepareStatement("SELECT tags.id, tags.name FROM book_tags "+
-                                                            " INNER JOIN books ON books.id = book_tags.book_id "+
-                                                            " INNER JOIN tags ON tags.id = book_tags.tag_id "+
-                                                            "WHERE books.id = ?");
+        PreparedStatement tagStatement = c.prepareStatement(
+            "SELECT tags.id, tags.name FROM book_tags "
+          + " INNER JOIN books ON books.id = book_tags.book_id "
+          + " INNER JOIN tags ON tags.id = book_tags.tag_id "
+          + "WHERE books.id = ?"
+        );
         ArrayList<Tag> tags = new ArrayList<Tag>();
         try {
             tagStatement.setInt(1, this.id);

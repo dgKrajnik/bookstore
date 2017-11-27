@@ -13,10 +13,7 @@ class ConnectionManager {
     protected static Connection getConnection() {
         try {
             if (sqldb == null || sqldb.isClosed()) {
-                sqldb = DriverManager.getConnection("jdbc:hsqldb:mem:bookdb", "SA", "");
-                Statement initStatement = sqldb.createStatement();
-                initStatement.executeUpdate(DBConsts.SCHEMA);
-                initStatement.close();
+                initDB();
             }
             return sqldb;
         } catch (SQLException e) {
@@ -35,6 +32,10 @@ class ConnectionManager {
         }
     }
 
-    private static void initDB() {
+    private static void initDB() throws SQLException {
+        sqldb = DriverManager.getConnection("jdbc:hsqldb:mem:bookdb", "SA", "");
+        Statement initStatement = sqldb.createStatement();
+        initStatement.execute(DBConsts.SCHEMA);
+        initStatement.close();
     }
 }

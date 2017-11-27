@@ -18,6 +18,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 
 class AdderTests {
+    @BeforeAll
+    static void clearDB() {
+        try {
+            Connection c = ConnectionManager.getConnection();
+            c.createStatement().execute("TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+
     @Test
     void basicAddTest() {
         try {

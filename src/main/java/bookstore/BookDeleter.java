@@ -1,9 +1,14 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
+package org.dgkrajnik.bookstore;
+
 import java.sql.SQLException;
 
-import org.hsqldb.jdbc.JDBCDriver;
-
 public interface BookDeleter {
-    public void deleteBook(int bookID);
+    /**
+     * Takes a book ID and deletes it from the database.
+     * This function will *not* delete the Author of a book from the database, or
+     * any tags attached to this book ID.
+     *
+     * @param bookID The ID field of a book.
+     */
+    public void deleteBook(int bookID) throws SQLException;
 }

@@ -10,24 +10,29 @@ import java.sql.SQLException;
 
 import org.hsqldb.jdbc.JDBCDriver;
 
-public class DefaultBookAdder {
+public class DefaultBookAdder implements BookAdder {
     public DefaultBookAdder() {};
 
     public Book addBook(Book book) throws SQLException {
         Connection c = ConnectionManager.getConnection();
-        PreparedStatement authorAddStatement = c.prepareStatement("MERGE INTO authors AS target "
-                                                                + "USING (VALUES(?)) AS source(name) "
-                                                                + " ON (LOWER(target.name) = LOWER(source.name)) "
-                                                                + "WHEN NOT MATCHED THEN "
-                                                                + " INSERT (name) VALUES (source.name);");
-        PreparedStatement authorGetStatement = c.prepareStatement("SELECT id FROM authors "
-                                                                + "WHERE (LOWER(authors.name) = LOWER(?));",
-                                                                ResultSet.TYPE_SCROLL_SENSITIVE,
-                                                                ResultSet.CONCUR_READ_ONLY);
-        PreparedStatement adderStatement = c.prepareStatement("INSERT INTO books (name, publish_date, "
-                                                            + "                   price, author_id) "
-                                                            + "VALUES (?, ?, ?, ?);",
-                                                              Statement.RETURN_GENERATED_KEYS);
+        PreparedStatement authorAddStatement = c.prepareStatement(
+            "MERGE INTO authors AS target "
+          + "USING (VALUES(?)) AS source(name) "
+          + " ON (LOWER(target.name) = LOWER(source.name)) "
+          + "WHEN NOT MATCHED THEN "
+          + " INSERT (name) VALUES (source.name);"
+        );
+        PreparedStatement authorGetStatement = c.prepareStatement(
+            "SELECT id FROM authors "
+          + "WHERE (LOWER(authors.name) = LOWER(?));",
+            ResultSet.TYPE_SCROLL_SENSITIVE,
+            ResultSet.CONCUR_READ_ONLY
+        );
+        PreparedStatement adderStatement = c.prepareStatement(
+            "INSERT INTO books (name, publish_date, price, author_id) "
+          + "VALUES (?, ?, ?, ?);",
+            Statement.RETURN_GENERATED_KEYS
+        );
         Book outBook = book;
         try {
             authorAddStatement.setString(1, book.author);
