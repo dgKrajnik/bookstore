@@ -20,14 +20,10 @@ public class DefaultBookAdder implements BookAdder {
           + "USING (VALUES(?)) AS source(name) "
           + " ON (LOWER(target.name) = LOWER(source.name)) "
           + "WHEN NOT MATCHED THEN "
-          + " INSERT (name) VALUES (source.name);"
+          + " INSERT (name) VALUES (source.name);",
+          Statement.RETURN_GENERATED_KEYS
         );
-        PreparedStatement authorGetStatement = c.prepareStatement(
-            "SELECT id FROM authors "
-          + "WHERE (LOWER(authors.name) = LOWER(?));",
-            ResultSet.TYPE_SCROLL_SENSITIVE,
-            ResultSet.CONCUR_READ_ONLY
-        );
+        PreparedStatement authorGetStatement = null;
         PreparedStatement adderStatement = c.prepareStatement(
             "INSERT INTO books (name, publish_date, price, author_id) "
           + "VALUES (?, ?, ?, ?);",
@@ -37,10 +33,19 @@ public class DefaultBookAdder implements BookAdder {
         try {
             authorAddStatement.setString(1, book.author);
             authorAddStatement.executeUpdate();
+            ResultSet authorIns = authorAddStatement.getGeneratedKeys();
+            if (!authorIns.next()) {
+                authorGetStatement = c.prepareStatement(
+                    "SELECT id FROM authors "
+                  + "WHERE (LOWER(authors.name) = LOWER(?));",
+                    ResultSet.TYPE_SCROLL_SENSITIVE,
+                    ResultSet.CONCUR_READ_ONLY
+                );
+                authorGetStatement.setString(1, book.author);
+                authorIns = authorGetStatement.executeQuery();
+                authorIns.first();
+            }
 
-            authorGetStatement.setString(1, book.author);
-            ResultSet authorIns = authorGetStatement.executeQuery();
-            authorIns.first();
             int authorID = authorIns.getInt(1);
 
             adderStatement.setString(1, book.name);
@@ -54,8 +59,10 @@ public class DefaultBookAdder implements BookAdder {
             outBook = new Book(bookID, book.name, book.publishDate, book.price, book.author);
         } finally {
             authorAddStatement.close();
-            authorGetStatement.close();
             adderStatement.close();
+            if (authorGetStatement != null) {
+                authorGetStatement.close();
+            }
         }
         return outBook;
     }

@@ -91,7 +91,7 @@ public class Book {
         }
         Connection c = ConnectionManager.getConnection();
         PreparedStatement tagStatement = c.prepareStatement(
-            "SELECT tags.id, tags.name FROM book_tags "
+            "SELECT tags.id, tags.tag FROM book_tags "
           + " INNER JOIN books ON books.id = book_tags.book_id "
           + " INNER JOIN tags ON tags.id = book_tags.tag_id "
           + "WHERE books.id = ?"
@@ -108,19 +108,5 @@ public class Book {
             tagStatement.close();
         }
         return tags;
-    }
-    protected void addTag(int tagID) throws SQLException {
-        if (id == null) {
-            throw new UnsupportedOperationException("Cannot set tags for a book not currently in the database.");
-        }
-        Connection c = ConnectionManager.getConnection();
-        PreparedStatement addStatement = c.prepareStatement("INSERT INTO book_tags VALUES (?, ?)");
-        try {
-            addStatement.setInt(1, this.id);
-            addStatement.setInt(2, tagID);
-            addStatement.executeUpdate();
-        } finally {
-            addStatement.close();
-        }
     }
 }

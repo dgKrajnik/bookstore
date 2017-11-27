@@ -9,7 +9,8 @@ class DBConsts {
         ");\n"+
         "CREATE TABLE IF NOT EXISTS tags (\n"+
             "id INT IDENTITY PRIMARY KEY,\n"+
-            "tag VARCHAR(5000),\n"+
+            "tag VARCHAR_IGNORECASE(5000),\n"+
+            "CONSTRAINT unique_tagnames UNIQUE (tag),\n"+
         ");\n"+
         "CREATE TABLE IF NOT EXISTS books (\n"+
             "id INT IDENTITY PRIMARY KEY,\n"+
