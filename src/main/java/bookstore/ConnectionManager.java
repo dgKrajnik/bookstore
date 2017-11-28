@@ -8,9 +8,14 @@ import java.sql.SQLException;
 import org.hsqldb.jdbc.JDBCDriver;
 
 class ConnectionManager {
-    private static Connection sqldb = null;
+    private Connection sqldb = null;
+    private String sqlURL;
 
-    protected static Connection getConnection() {
+    public ConnectionManager(String sqlURL) {
+        this.sqlURL = sqlURL;
+    }
+
+    protected Connection getConnection() {
         try {
             if (sqldb == null || sqldb.isClosed()) {
                 initDB();
@@ -21,7 +26,7 @@ class ConnectionManager {
         }
     }
 
-    protected static void closeConnection() {
+    protected void closeConnection() {
         try {
             if (sqldb != null && !sqldb.isClosed()) {
                     sqldb.close();
@@ -32,8 +37,8 @@ class ConnectionManager {
         }
     }
 
-    private static void initDB() throws SQLException {
-        sqldb = DriverManager.getConnection("jdbc:hsqldb:mem:bookdb", "SA", "");
+    private void initDB() throws SQLException {
+        sqldb = DriverManager.getConnection(this.sqlURL, "SA", "");
         Statement initStatement = sqldb.createStatement();
         initStatement.execute(DBConsts.SCHEMA);
         initStatement.close();

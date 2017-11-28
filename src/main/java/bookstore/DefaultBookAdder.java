@@ -11,10 +11,14 @@ import java.sql.SQLException;
 import org.hsqldb.jdbc.JDBCDriver;
 
 public class DefaultBookAdder implements BookAdder {
-    public DefaultBookAdder() {};
+    private ConnectionManager cm;
+
+    public DefaultBookAdder(ConnectionManager cm) {
+        this.cm = cm;
+    };
 
     public Book addBook(Book book) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement authorAddStatement = c.prepareStatement(
             "MERGE INTO authors AS target "
           + "USING (VALUES(?)) AS source(name) "

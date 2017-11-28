@@ -12,13 +12,25 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 
 class DeleterTests {
+    private static ConnectionManager cm;
     @BeforeAll
-    static void clearDB() {
+    static void makeCM() {
+        cm = new ConnectionManager("jdbc:hsqldb:mem:testdb");
+    }
+    @AfterAll
+    static void closeCM() {
+        cm.closeConnection();
+    }
+
+    @BeforeEach
+    void clearDB() {
         try {
-            Connection c = ConnectionManager.getConnection();
+            Connection c = cm.getConnection();
             c.createStatement().execute("TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK");
         } catch (SQLException e) {
             fail("SQLException: " + e.getMessage());
@@ -28,7 +40,7 @@ class DeleterTests {
     @Test
     void basicDeleteTest() {
         try {
-            Connection c = ConnectionManager.getConnection();
+            Connection c = cm.getConnection();
             Statement prefillStatement = c.createStatement();
             prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Herrington')");
             prefillStatement.executeUpdate(
@@ -41,7 +53,7 @@ class DeleterTests {
             int insertID = insertres.getInt(1);
             prefillStatement.close();
 
-            DefaultBookDeleter deleter = new DefaultBookDeleter();
+            DefaultBookDeleter deleter = new DefaultBookDeleter(cm);
             deleter.deleteBook(insertID);
 
             Statement getterStatement = c.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,

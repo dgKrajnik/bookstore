@@ -12,11 +12,15 @@ import java.sql.SQLException;
 import org.hsqldb.jdbc.JDBCDriver;
 
 public class DefaultBookLister implements BookLister {
-    public DefaultBookLister() {};
+    private ConnectionManager cm;
+
+    public DefaultBookLister(ConnectionManager cm) {
+        this.cm = cm;
+    };
 
     public List<Book> getBooks() throws SQLException {
         ArrayList<Book> bookList = null;
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         Statement listerStatement = c.createStatement();
         try {
             ResultSet books = listerStatement.executeQuery(

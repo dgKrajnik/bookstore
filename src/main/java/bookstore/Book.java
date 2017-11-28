@@ -48,12 +48,12 @@ public class Book {
         return this.author;
     }
 
-    public byte[] getData() throws SQLException {
+    public byte[] getData(ConnectionManager cm) throws SQLException {
         if (id == null) {
             return null;
         }
         byte[] dataBytes = null;
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement dataStatement = c.prepareStatement("SELECT book_data FROM books WHERE id = ?");
         try {
             dataStatement.setInt(1, this.id);
@@ -68,11 +68,11 @@ public class Book {
         }
         return dataBytes;
     }
-    protected void setData(byte[] data) throws SQLException {
+    protected void setData(ConnectionManager cm, byte[] data) throws SQLException {
         if (id == null) {
             throw new UnsupportedOperationException("Cannot set data for a book not currently in the database.");
         }
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         Blob dataBlob = c.createBlob();
         dataBlob.setBytes(1, data);
         PreparedStatement dataStatement = c.prepareStatement("UPDATE books SET book_data = ? WHERE id = ?");
@@ -85,11 +85,11 @@ public class Book {
         }
     }
 
-    public ArrayList<Tag> getTags() throws SQLException {
+    public ArrayList<Tag> getTags(ConnectionManager cm) throws SQLException {
         if (id == null) {
             return null;
         }
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement tagStatement = c.prepareStatement(
             "SELECT tags.id, tags.tag FROM book_tags "
           + " INNER JOIN books ON books.id = book_tags.book_id "

@@ -12,10 +12,13 @@ import org.hsqldb.jdbc.JDBCDriver;
 import org.hsqldb.error.ErrorCode;
 
 public class DefaultBookTagger implements BookTagger {
-    public DefaultBookTagger() {};
+    private ConnectionManager cm;
+    public DefaultBookTagger(ConnectionManager cm) {
+        this.cm = cm;
+    };
 
     public void addTag(int bookID, Tag tag) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement tagAddStatement = c.prepareStatement(
             "INSERT INTO book_tags VALUES (?, ?)"
         );
@@ -29,7 +32,7 @@ public class DefaultBookTagger implements BookTagger {
     }
 
     public void removeTag(int bookID, Tag tag) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement removeStatement = c.prepareStatement(
             "DELETE FROM book_tags WHERE book_id = ? AND tag_id = ?;"
         );
@@ -43,7 +46,7 @@ public class DefaultBookTagger implements BookTagger {
     }
 
     public Tag createTag(String name) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement tagAddStatement = c.prepareStatement(
             "MERGE INTO tags AS target "
           + "USING (VALUES(?)) AS source(tag) "
@@ -80,7 +83,7 @@ public class DefaultBookTagger implements BookTagger {
     }
 
     public Tag renameTag(Tag tag, String newName) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement tagUpdateStatement = c.prepareStatement(
             "MERGE INTO tags AS target "
           + "USING (VALUES(?, ?)) AS source(id, tag) "

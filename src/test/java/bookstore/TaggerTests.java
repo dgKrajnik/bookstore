@@ -14,12 +14,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterAll;
 
 class TaggerTests {
+    private static ConnectionManager cm;
+    @BeforeAll
+    static void makeCM() {
+        cm = new ConnectionManager("jdbc:hsqldb:mem:testdb");
+    }
+    @AfterAll
+    static void closeCM() {
+        cm.closeConnection();
+    }
+
     @BeforeEach
     void clearDB() {
         try {
-            Connection c = ConnectionManager.getConnection();
+            Connection c = cm.getConnection();
             c.createStatement().execute("TRUNCATE SCHEMA PUBLIC RESTART IDENTITY AND COMMIT NO CHECK");
         } catch (SQLException e) {
             fail("SQLException: " + e.getMessage());
@@ -29,8 +41,8 @@ class TaggerTests {
     @Test
     void basicTagCreateTest() {
         try {
-            Connection c = ConnectionManager.getConnection();
-            DefaultBookTagger tagger = new DefaultBookTagger();
+            Connection c = cm.getConnection();
+            DefaultBookTagger tagger = new DefaultBookTagger(cm);
             Tag ttag = tagger.createTag("testTag");
             Statement checkStatement = c.createStatement();
             ResultSet tags = checkStatement.executeQuery("SELECT * FROM tags");
@@ -46,13 +58,13 @@ class TaggerTests {
     @Test
     void basicTagRenameTest() {
         try {
-            Connection c = ConnectionManager.getConnection();
+            Connection c = cm.getConnection();
             Statement prefillStatement = c.createStatement();
             prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('testTag')");
             Tag newTag = new Tag(0, "testTag");
             prefillStatement.close();
 
-            DefaultBookTagger tagger = new DefaultBookTagger();
+            DefaultBookTagger tagger = new DefaultBookTagger(cm);
             Tag renamedTag = tagger.renameTag(newTag, "heyItWorked");
             Statement checkStatement = c.createStatement();
             ResultSet tags = checkStatement.executeQuery("SELECT * FROM tags");
@@ -67,7 +79,7 @@ class TaggerTests {
     @Test
     void basicTagAddTest() {
         try {
-            Connection c = ConnectionManager.getConnection();
+            Connection c = cm.getConnection();
             Statement prefillStatement = c.createStatement();
             prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Herrington')");
             prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
@@ -75,7 +87,7 @@ class TaggerTests {
             prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('testTag')");
             prefillStatement.close();
 
-            DefaultBookTagger tagger = new DefaultBookTagger();
+            DefaultBookTagger tagger = new DefaultBookTagger(cm);
             Tag newTag = new Tag(0, "testTag");
             tagger.addTag(0, newTag);
 

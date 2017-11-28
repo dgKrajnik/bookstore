@@ -11,10 +11,14 @@ import java.sql.SQLException;
 import org.hsqldb.jdbc.JDBCDriver;
 
 public class DefaultBookDeleter implements BookDeleter {
-    public DefaultBookDeleter() {};
+    private ConnectionManager cm;
+
+    public DefaultBookDeleter(ConnectionManager cm) {
+        this.cm = cm;
+    };
 
     public void deleteBook(int bookID) throws SQLException {
-        Connection c = ConnectionManager.getConnection();
+        Connection c = cm.getConnection();
         PreparedStatement deletionStatement = c.prepareStatement("DELETE FROM books WHERE books.id = ?");
         PreparedStatement tagDeletionStatement = c.prepareStatement("DELETE FROM book_tags WHERE book_id = ?");
         try {
