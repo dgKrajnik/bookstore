@@ -60,96 +60,107 @@ class ListerTests {
     }
 
     @Test
-    void basicFilterTest() {
+    void filterNameTest() {
         try {
-            Connection c = cm.getConnection();
-            Statement prefillStatement = c.createStatement();
-            prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Herrington')");
-            prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('Veritas Vernon')");
-            prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('Mr. Author')");
-            prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Missing')");
-
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('fiction')");
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('non-fiction')");
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('science')");
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('history')");
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('in this query')");
-            prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('not in this query')");
-
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Mornington', '2017-08-08', 124.80, 0)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Evenington', '2017-09-08', 90.0, 1)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Morning Sunrise?', '2017-10-08', 300.80, 2)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Morning Sunrise!', '2017-11-08', 80.0, 2)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Not Appearing In This Query', '2017-07-08', 80.0, 0)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Too Not Appearing In This Query', '2017-09-08', 9999.0, 0)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Not Appearing In This Query?', '2017-09-08', 9999.0, 3)");
-            prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
-                                         + "VALUES ('Not Appearing In This Query!', '2017-09-08', 40.0, 3)");
-
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (0, 1)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (0, 3)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (3, 0)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (3, 3)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (1, 4)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (2, 4)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (4, 5)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (5, 1)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (6, 1)");
-            prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (7, 1)");
-            prefillStatement.close();
-
+            prefillDB(cm);
             DefaultBookLister lister = new DefaultBookLister(cm);
-            List<Book> results;
 
             ListerFilter morningFilter = new ListerFilter();
             morningFilter.filterName("Morning");
-            results = lister.getBooks(morningFilter);
+            List<Book> results = lister.getBooks(morningFilter);
             assertEquals(results.size(), 3);
             assertEquals(results.get(0).getName(), "Mornington");
             assertEquals(results.get(1).getName(), "Morning Sunrise?");
             assertEquals(results.get(2).getName(), "Morning Sunrise!");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterAuthorTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter authorFilter = new ListerFilter();
             authorFilter.filterAuthor("Veritas");
-            results = lister.getBooks(authorFilter);
+            List<Book> results = lister.getBooks(authorFilter);
             assertEquals(results.size(), 1);
             assertEquals(results.get(0).getName(), "Evenington");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterDateTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter dateFilter = new ListerFilter();
             dateFilter.filterDateAfter(LocalDate.of(2017, 8, 8));
             dateFilter.filterDateBefore(LocalDate.of(2017, 9, 7));
-            results = lister.getBooks(dateFilter);
+            List<Book> results = lister.getBooks(dateFilter);
             assertEquals(results.size(), 1);
             assertEquals(results.get(0).getName(), "Mornington");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterPriceTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter priceFilter = new ListerFilter();
             priceFilter.filterPriceAbove(new BigDecimal("90.0"));
             priceFilter.filterPriceBelow(new BigDecimal("124.70"));
-            results = lister.getBooks(priceFilter);
+            List<Book> results = lister.getBooks(priceFilter);
             assertEquals(results.size(), 1);
             assertEquals(results.get(0).getName(), "Evenington");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterAnyTagTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter anyTagFilter = new ListerFilter();
             List<String> anyTags = Arrays.asList("history", "science");
             anyTagFilter.filterMatchAnyTag(anyTags);
-            results = lister.getBooks(anyTagFilter);
+            List<Book> results = lister.getBooks(anyTagFilter);
             assertEquals(results.size(), 2);
             assertEquals(results.get(0).getName(), "Mornington");
             assertEquals(results.get(1).getName(), "Morning Sunrise!");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterAllTagTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter allTagFilter = new ListerFilter();
             List<String> allTags = Arrays.asList("history", "non-fiction");
             allTagFilter.filterMatchAllTags(allTags);
-            results = lister.getBooks(allTagFilter);
+            List<Book> results = lister.getBooks(allTagFilter);
             assertEquals(results.size(), 1);
             assertEquals(results.get(0).getName(), "Mornington");
+        } catch (SQLException e) {
+            fail("SQLException: " + e.getMessage());
+        }
+    }
+    @Test
+    void filterMultiTest() {
+        try {
+            prefillDB(cm);
+            DefaultBookLister lister = new DefaultBookLister(cm);
 
             ListerFilter bigFilter = new ListerFilter();
             List<String> bigAnyTags = Arrays.asList("history", "science", "in this query");
@@ -159,7 +170,7 @@ class ListerTests {
             bigFilter.filterDateAfter(LocalDate.of(2017, 8, 8));
             bigFilter.filterDateBefore(LocalDate.of(2017, 12, 1));
             bigFilter.filterName("ing");
-            results = lister.getBooks(bigFilter);
+            List<Book> results = lister.getBooks(bigFilter);
             assertEquals(results.size(), 4);
             assertEquals(results.get(0).getName(), "Mornington");
             assertEquals(results.get(1).getName(), "Evenington");
@@ -168,5 +179,50 @@ class ListerTests {
         } catch (SQLException e) {
             fail("SQLException: " + e.getMessage());
         }
+    }
+
+    private void prefillDB(ConnectionManager cm) throws SQLException {
+        Connection c = cm.getConnection();
+        Statement prefillStatement = c.createStatement();
+        prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Herrington')");
+        prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('Veritas Vernon')");
+        prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('Mr. Author')");
+        prefillStatement.executeUpdate("INSERT INTO authors (name) VALUES ('S. Missing')");
+
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('fiction')");
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('non-fiction')");
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('science')");
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('history')");
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('in this query')");
+        prefillStatement.executeUpdate("INSERT INTO tags (tag) VALUES ('not in this query')");
+
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Mornington', '2017-08-08', 124.80, 0)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Evenington', '2017-09-08', 90.0, 1)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Morning Sunrise?', '2017-10-08', 300.80, 2)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Morning Sunrise!', '2017-11-08', 80.0, 2)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Not Appearing In This Query', '2017-07-08', 80.0, 0)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Too Not Appearing In This Query', '2017-09-08', 9999.0, 0)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Not Appearing In This Query?', '2017-09-08', 9999.0, 3)");
+        prefillStatement.executeUpdate("INSERT INTO books (name, publish_date, price, author_id) "
+                                     + "VALUES ('Not Appearing In This Query!', '2017-09-08', 40.0, 3)");
+
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (0, 1)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (0, 3)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (3, 0)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (3, 3)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (1, 4)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (2, 4)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (4, 5)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (5, 1)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (6, 1)");
+        prefillStatement.executeUpdate("INSERT INTO book_tags (book_id, tag_id) VALUES (7, 1)");
+        prefillStatement.close();
     }
 }
