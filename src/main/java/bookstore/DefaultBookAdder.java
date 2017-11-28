@@ -70,4 +70,15 @@ public class DefaultBookAdder implements BookAdder {
         }
         return outBook;
     }
+
+    public Book addBook(Book book, byte[] data) throws SQLException {
+        Book b = addBook(book);
+        b.setData(cm, data);
+
+        return b;
+    }
+
+    public void changeData(Book book, byte[] data) throws SQLException {
+        book.setData(cm, data);
+    }
 }

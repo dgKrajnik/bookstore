@@ -1,6 +1,7 @@
 package org.dgkrajnik.bookstore;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import java.time.LocalDate;
 import java.math.BigDecimal;
@@ -54,7 +55,10 @@ public class Book {
         }
         byte[] dataBytes = null;
         Connection c = cm.getConnection();
-        PreparedStatement dataStatement = c.prepareStatement("SELECT book_data FROM books WHERE id = ?");
+        PreparedStatement dataStatement = c.prepareStatement(
+                "SELECT book_data FROM books WHERE id = ?",
+                ResultSet.TYPE_SCROLL_SENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
         try {
             dataStatement.setInt(1, this.id);
             ResultSet dataResults = dataStatement.executeQuery();
@@ -85,7 +89,7 @@ public class Book {
         }
     }
 
-    public ArrayList<Tag> getTags(ConnectionManager cm) throws SQLException {
+    public List<Tag> getTags(ConnectionManager cm) throws SQLException {
         if (id == null) {
             return null;
         }
@@ -96,7 +100,7 @@ public class Book {
           + " INNER JOIN tags ON tags.id = book_tags.tag_id "
           + "WHERE books.id = ?"
         );
-        ArrayList<Tag> tags = new ArrayList<Tag>();
+        List<Tag> tags = new ArrayList<Tag>();
         try {
             tagStatement.setInt(1, this.id);
             ResultSet tagResults = tagStatement.executeQuery();

@@ -7,12 +7,23 @@ import java.sql.SQLException;
 
 import org.hsqldb.jdbc.JDBCDriver;
 
-class ConnectionManager {
+public class ConnectionManager {
     private Connection sqldb = null;
     private String sqlURL;
 
     public ConnectionManager(String sqlURL) {
         this.sqlURL = sqlURL;
+    }
+
+    public void closeConnection() {
+        try {
+            if (sqldb != null && !sqldb.isClosed()) {
+                    sqldb.close();
+                    sqldb = null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected Connection getConnection() {
@@ -21,17 +32,6 @@ class ConnectionManager {
                 initDB();
             }
             return sqldb;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void closeConnection() {
-        try {
-            if (sqldb != null && !sqldb.isClosed()) {
-                    sqldb.close();
-                    sqldb = null;
-            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
